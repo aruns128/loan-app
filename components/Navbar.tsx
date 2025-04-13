@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { FaBars, FaUser, FaHome, FaRegMoneyBillAlt } from "react-icons/fa";
-import { useAuth } from "@/app/context/AuthContext";
 import { FiLogOut } from "react-icons/fi";
+import { useAuth } from "@/app/context/AuthContext";
 
 export default function Navbar({ children }: { children: React.ReactNode }) {
     const { isLoggedIn, logout } = useAuth();
@@ -53,18 +53,20 @@ export default function Navbar({ children }: { children: React.ReactNode }) {
     return (
         <div className="flex h-screen overflow-hidden">
             {/* Sidebar - Desktop */}
-            <div className="hidden lg:flex flex-col bg-blue-900 text-white w-64 fixed h-full z-20">
-                <div className="text-2xl font-bold text-center py-6 border-b border-blue-800">
-                    {pageTitle}
+            <div className="hidden lg:flex flex-col bg-gradient-to-b from-[#0127fa] to-[#c309ec] text-white w-64 fixed h-full z-20">
+                <div className="py-6 border-b border-white text-center">
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-[#ffffff] via-[#d3a4f7] to-[#ffffff] text-transparent bg-clip-text">
+                        {pageTitle}
+                    </h1>
                 </div>
                 <div className="flex-1 flex flex-col justify-center px-6 space-y-4">
                     {navLinks.map(({ href, label, icon }) => (
                         <Link
                             key={href}
                             href={href}
-                            className={`flex items-center space-x-3 text-lg px-2 py-2 rounded-md ${isActive(href)
-                                ? "bg-blue-800 text-white"
-                                : "hover:bg-blue-700 text-blue-100"
+                            className={`flex items-center space-x-3 text-lg px-3 py-2 rounded-md transition-colors ${isActive(href)
+                                    ? "bg-blue-600 bg-opacity-10 text-white font-semibold"
+                                    : "hover:bg-[#c309ec] hover:bg-opacity-20 text-white"
                                 }`}
                         >
                             {icon}
@@ -72,31 +74,34 @@ export default function Navbar({ children }: { children: React.ReactNode }) {
                         </Link>
                     ))}
                 </div>
-
             </div>
 
             {/* Mobile Sidebar */}
             {isSidebarOpen && (
                 <div
-                    className="fixed inset-0 z-40 bg-slate-100 lg:hidden"
+                    className="fixed inset-0 z-40 bg-white bg-opacity-50 lg:hidden"
                     onClick={() => setIsSidebarOpen(false)}
                 >
                     <div
-                        className="w-64 bg-blue-900 text-white h-full flex flex-col justify-between p-6"
+                        className="w-64 bg-gradient-to-b from-[#0127fa] to-[#c309ec] text-white h-full flex flex-col justify-between p-6"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Top - Page Title */}
-                        <div className="text-2xl font-bold text-center mb-4">{pageTitle}</div>
+                        <div className="mb-6 text-center">
+                            <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-[#d3a4f7] to-white text-transparent bg-clip-text">
+                                {pageTitle}
+                            </h1>
+                        </div>
 
                         {/* Middle - Navigation */}
-                        <nav className="flex flex-col items-start space-y-4">
+                        <nav className="flex flex-col space-y-4">
                             {navLinks.map(({ href, label, icon }) => (
                                 <Link
                                     key={href}
                                     href={href}
-                                    className={`flex items-center space-x-3 text-lg px-2 py-2 rounded-md w-full ${isActive(href)
-                                        ? "bg-blue-800 text-white"
-                                        : "hover:bg-blue-700 text-blue-100"
+                                    className={`flex items-center space-x-3 text-lg px-3 py-2 rounded-md transition-colors ${isActive(href)
+                                            ? "bg-blue-600 bg-opacity-10 text-white font-semibold"
+                                            : "hover:bg-[#c309ec] hover:bg-opacity-20 text-white"
                                         }`}
                                     onClick={() => setIsSidebarOpen(false)}
                                 >
@@ -106,11 +111,14 @@ export default function Navbar({ children }: { children: React.ReactNode }) {
                             ))}
                         </nav>
 
-
-                        <div className="flex items-center justify-center text-red-600 mt-6">
-                            <button className="flex items-center space-x-2" onClick={handleLogout}>
+                        {/* Bottom - Logout */}
+                        <div className="mt-6 flex justify-center">
+                            <button
+                                onClick={handleLogout}
+                                className="flex items-center space-x-2 text-white hover:text-red-400"
+                            >
                                 <FiLogOut />
-                                <span className="text-red-600 font-bold">Logout</span>
+                                <span className="font-bold">Logout</span>
                             </button>
                         </div>
                     </div>
@@ -120,20 +128,27 @@ export default function Navbar({ children }: { children: React.ReactNode }) {
             {/* Main content wrapper */}
             <div className="flex-1 flex flex-col w-full lg:ml-64">
                 {/* Mobile Topbar */}
-                <div className="lg:hidden bg-white shadow border-b p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-10">
-                    <button onClick={() => setIsSidebarOpen(true)} className="text-blue-700">
+                <div className="lg:hidden bg-gradient-to-l from-[#0127fa] to-[#c309ec] shadow border-b p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-10 text-white">
+                    <button onClick={() => setIsSidebarOpen(true)}>
                         <FaBars size={24} />
                     </button>
-                    <div className="text-xl font-bold text-blue-600">{pageTitle}</div>
+                    <h1 className="text-xl font-bold bg-gradient-to-r from-white via-[#d3a4f7] to-white text-transparent bg-clip-text">
+                        {pageTitle}
+                    </h1>
                 </div>
 
                 {/* Desktop Topbar */}
-                <div className="hidden lg:flex bg-white shadow border-b p-4 justify-between items-center fixed top-0 left-64 right-0 z-10">
-                    <div className="text-xl font-bold text-blue-600">{pageTitle}</div>
-                    <div className="flex items-center space-x-4 text-gray-700 hover:text-red-600">
-                        <button className="flex items-center space-x-2" onClick={handleLogout}>
+                <div className="hidden lg:flex bg-gradient-to-l from-[#0127fa] to-[#c309ec] shadow border-b p-4 justify-between items-center fixed top-0 left-64 right-0 z-10 text-white">
+                    <h1 className="text-xl font-bold bg-gradient-to-r from-white via-[#d3a4f7] to-white text-transparent bg-clip-text">
+                        {pageTitle}
+                    </h1>
+                    <div className="flex items-center space-x-4">
+                        <button
+                            onClick={handleLogout}
+                            className="flex items-center space-x-2 hover:text-red-400"
+                        >
                             <FiLogOut />
-                            <span className="text-gray-700 hover:text-red-600 font-bold">Logout</span>
+                            <span className="font-bold">Logout</span>
                         </button>
                     </div>
                 </div>
