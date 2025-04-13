@@ -1,25 +1,45 @@
 import { connectToDatabase } from '@/app/lib/mongodb';
 import Loan from '@/app/models/Loan';
 import { NextResponse } from 'next/server';
+import { verifyToken } from '@/app/lib/jwt';
 
-export async function GET() {
+function getUserFromRequest(request: Request) {
+  const cookie = request.headers.get('cookie');
+  if (!cookie) return null;
+
+  const tokenMatch = cookie.match(/token=([^;]+)/);
+  const token = tokenMatch ? tokenMatch[1] : null;
+  if (!token) return null;
+
+  try {
+    const user = verifyToken(token);
+    return user;
+  } catch (error) {
+    return null;
+  }
+}
+
+
+export async function GET(request: Request) {
+  const user = getUserFromRequest(request);
+  if (!user) {
+    return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  }
+
   await connectToDatabase();
-
   const loans = await Loan.find({});
 
   const today = new Date();
   const todayMonth = today.getMonth(); // 0-indexed
   const todayDate = today.getDate();
 
-  // Convert a loan's start_date to a comparable MMDD format
   const getMonthDateKey = (dateStr: string | Date) => {
     const d = new Date(dateStr);
-    return d.getMonth() * 100 + d.getDate(); // e.g., April 13 => 313
+    return d.getMonth() * 100 + d.getDate();
   };
 
   const todayKey = todayMonth * 100 + todayDate;
 
-  // Sort all loans based on MMDD value, keeping the next nearest first
   const sortedLoans = loans.sort((a, b) => {
     const aKey = getMonthDateKey(a.start_date);
     const bKey = getMonthDateKey(b.start_date);
@@ -34,6 +54,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const user = getUserFromRequest(request);
+  if (!user) {
+    return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  }
+
   const body = await request.json();
   await connectToDatabase();
 

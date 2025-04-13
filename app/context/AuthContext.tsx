@@ -4,8 +4,8 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 type AuthContextType = {
   isLoggedIn: boolean;
-  login: () => void;
-  logout: () => void;
+  login: (identifier: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -13,20 +13,51 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // This will check if the user is logged in after page load
   useEffect(() => {
     const storedLogin = localStorage.getItem("isLoggedIn") === "true";
     setIsLoggedIn(storedLogin);
   }, []);
 
-  const login = () => {
-    localStorage.setItem("isLoggedIn", "true");
-    setIsLoggedIn(true);
+  const login = async (identifier: string, password: string) => {
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // Cookie must be included
+        body: JSON.stringify({ identifier, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem("isLoggedIn", "true");
+        setIsLoggedIn(true);
+        window.location.href = "/dashboard"; // Redirect on success
+      } else {
+        alert(data.message || "Login failed");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      alert("Something went wrong.");
+    }
   };
 
-  const logout = () => {
-    localStorage.removeItem("isLoggedIn");
-    setIsLoggedIn(false);
+  const logout = async () => {
+    try {
+      await fetch("/api/logout", {
+        method: "GET",
+        credentials: "include", // Include cookie
+      });
+
+      localStorage.removeItem("isLoggedIn");
+      setIsLoggedIn(false);
+      window.location.href = "/";
+    } catch (err) {
+      console.error("Logout error:", err);
+      alert("Something went wrong.");
+    }
   };
 
   return (
