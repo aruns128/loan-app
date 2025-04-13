@@ -3,6 +3,7 @@ import { useState } from 'react';
 import useSWR from 'swr';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import AddEditModal from '@/components/AddEditModal';
+import Navbar from '@/components/Navbar';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -69,6 +70,7 @@ export default function HomePage() {
   };
 
   return (
+    <Navbar>
     <main className="p-6 max-w-full mx-auto">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">📋 Loan List - Arunkumar</h1>
       <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -204,5 +206,6 @@ export default function HomePage() {
         />
       )}
     </main>
+    </Navbar>
   );
 }
