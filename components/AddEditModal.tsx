@@ -121,8 +121,13 @@ const AddEditModal = ({
       <div className="fixed inset-0 bg-black opacity-50 z-10" onClick={closeModal}></div>
 
       {/* Modal Content */}
-      <div className="fixed inset-0 flex items-center justify-center z-20 px-4 sm:px-6">
-        <div className="bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-3xl overflow-y-auto max-h-screen p-6 sm:p-8">
+<div className="fixed inset-0 flex items-center justify-center z-20 px-2 sm:px-6">
+        <div
+          className="bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-md sm:max-w-3xl overflow-y-auto max-h-[90vh] p-6 sm:p-8"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* your <form> content remains unchanged */}
+
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl sm:text-3xl font-semibold text-gray-700">
