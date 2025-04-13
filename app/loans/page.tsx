@@ -16,7 +16,7 @@ export default function HomePage() {
   const [isModalOpen, setIsModalOpen] = useState(false); // State to manage modal visibility
   const [selectedLoan, setSelectedLoan] = useState<any>(null); // State to hold selected loan data (for edit)
 
-  if (isLoading) return <div className="p-6 text-lg">Loading...</div>;
+  if (isLoading) return <div className="text-center p-6 text-gray-600">Loading...</div>;
 
   const filteredLoans = loans.filter((loan: any) => {
     const matchesQuery = loan.borrower_name.toLowerCase().includes(query.toLowerCase());
