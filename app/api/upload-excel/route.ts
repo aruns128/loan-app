@@ -2,8 +2,32 @@ import * as XLSX from 'xlsx';
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/app/lib/mongodb';
 import Loan from '@/app/models/Loan';
+import { verifyToken } from '@/app/lib/jwt';
+import mongoose from 'mongoose';
+
+// Function to get the user from the request
+function getUserFromRequest(request: Request) {
+  const cookie = request.headers.get('cookie');
+  if (!cookie) return null;
+
+  const tokenMatch = cookie.match(/token=([^;]+)/);
+  const token = tokenMatch ? tokenMatch[1] : null;
+  if (!token) return null;
+
+  try {
+    const user = verifyToken(token); // Verify token and get user data
+    return user; // The 'user' should include the user id (e.g., user.id)
+  } catch (error) {
+    return null; // If token is invalid or expired, return null
+  }
+}
 
 export async function POST(req: Request) {
+  const user = getUserFromRequest(req);
+  if (!user) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+
   const formData = await req.formData();
   const file = formData.get('file') as Blob;
 
@@ -48,7 +72,8 @@ export async function POST(req: Request) {
         months_elapsed: item['Months Elapsed'],
         total_year: item['Total Year'],
         status: item['Status'],
-        earned_amount: item['Earned amount'] || 0
+        earned_amount: item['Earned amount'] || 0,
+        user: new mongoose.Types.ObjectId(user.id)  // Attach the user ID
       };
     });
 

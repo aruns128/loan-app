@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import isEqual from "lodash/isEqual";
+import { IoCloseCircleOutline } from "react-icons/io5";
+import { fetcher } from "@/app/lib/apiService";
 
 
 // Yup validation schema
@@ -26,12 +28,6 @@ const loanValidationSchema = yup.object({
     .positive("Loan period should be greater than zero.")
     .required("Loan period is required."),
   start_date: yup.date().required("Start date is required."),
-  interest_per_month: yup
-    .number()
-    .transform((value, originalValue) =>
-      originalValue === "" ? undefined : value
-    )
-    .required("Interest per month is required."),
   principal: yup
     .number()
     .transform((value, originalValue) =>
@@ -55,9 +51,11 @@ const loanValidationSchema = yup.object({
 const AddEditModal = ({
   initialData,
   closeModal,
+  refreshData
 }: {
   initialData?: any;
   closeModal: () => void;
+  refreshData:()=>void;
 }) => {
   const {
     register,
@@ -104,16 +102,53 @@ const AddEditModal = ({
     setIsFormChanged(!isEqual(cleanedInitialData, cleanedWatchedValues));
   }, [watchedValues, initialData]);
 
-  const onSubmit = (data: any) => {
+  const onSubmit = async (data: any) => {
     setIsSubmitting(true);
-    console.log("Form Submitted:", data);
 
-    setTimeout(() => {
+    // Calculate interest_per_month
+    const interest_per_month = (data.roi_per_month / 100) * data.principal;
+    const months_elapsed = Math.floor(
+      (new Date().getTime() - new Date(data.start_date).getTime()) / (1000 * 3600 * 24 * 30)
+    );
+    const total_year = months_elapsed / 12;
+
+    const updatedData = {
+      ...data,
+      interest_per_month,
+      months_elapsed,
+      total_year,
+      earned_amount: data.earned_amount || 0
+
+    };
+
+    try {
+      const res = await fetch(
+        initialData ? `/api/loans/${initialData._id}` : "/api/loans",
+        {
+          method: initialData ? "PATCH" : "POST",
+          body: JSON.stringify(updatedData),
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+
+      if (res.ok) {
+        refreshData(); // Refresh local data
+        closeModal(); // Close the modal
+      } else {
+        const error = await res.json();
+        console.error("Error:", error.message || "Unknown error");
+        alert("Failed to save loan.");
+      }
+    } catch (err) {
+      console.error("Submission error:", err);
+      alert("Something went wrong while submitting.");
+    } finally {
       setIsSubmitting(false);
-      closeModal();
-      alert(initialData ? "Loan updated successfully!" : "Loan created successfully!");
-    }, 1000);
+    }
   };
+
+
 
   return (
     <>
@@ -126,8 +161,6 @@ const AddEditModal = ({
           className="bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-md sm:max-w-3xl overflow-y-auto max-h-[90vh] p-6 sm:p-8"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* your <form> content remains unchanged */}
-
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl sm:text-3xl font-semibold text-gray-700">
@@ -136,9 +169,9 @@ const AddEditModal = ({
               <button
                 type="button"
                 onClick={closeModal}
-                className="text-gray-600 hover:text-gray-800 text-2xl font-bold"
+                className="text-red-600 hover:text-red-400 text-2xl font-bold cursor-pointer"
               >
-                &times;
+                <IoCloseCircleOutline />
               </button>
             </div>
 
@@ -199,17 +232,6 @@ const AddEditModal = ({
                 {errors.start_date && <p className="text-xs text-red-500">{errors.start_date.message}</p>}
               </div>
 
-              {/* Interest Per Month */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Interest Per Month (₹)</label>
-                <input
-                  type="number"
-                  {...register("interest_per_month")}
-                  className={`w-full px-4 py-2 mt-1 border rounded-md shadow-sm ${errors.interest_per_month ? "border-red-500" : "border-gray-300"}`}
-                />
-                {errors.interest_per_month && <p className="text-xs text-red-500">{errors.interest_per_month.message}</p>}
-              </div>
-
               {/* Principal */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">Principal (₹)</label>
@@ -243,7 +265,7 @@ const AddEditModal = ({
                     {...register("earned_amount")}
                     className={`w-full px-4 py-2 mt-1 border rounded-md shadow-sm ${errors.earned_amount ? "border-red-500" : "border-gray-300"}`}
                   />
-                  {errors.earned_amount && <p className="text-xs text-red-500">{errors.earned_amount.message}</p>}
+                  {errors.earned_amount  && <p className="text-xs text-red-500">{errors.earned_amount.message}</p>}
                 </div>
               )}
 

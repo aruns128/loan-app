@@ -2,8 +2,16 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
+type UserType = {
+  id: string;
+  name: string;
+  username: string;
+  email: string;
+};
+
 type AuthContextType = {
   isLoggedIn: boolean;
+  user: UserType | null;
   login: (identifier: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -12,10 +20,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<UserType | null>(null);
 
   useEffect(() => {
     const storedLogin = localStorage.getItem("isLoggedIn") === "true";
+    const storedUser = localStorage.getItem("user");
+
     setIsLoggedIn(storedLogin);
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
   }, []);
 
   const login = async (identifier: string, password: string) => {
@@ -25,7 +39,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // Cookie must be included
+        credentials: "include",
         body: JSON.stringify({ identifier, password }),
       });
 
@@ -33,8 +47,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (res.ok) {
         localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("user", JSON.stringify(data.user));
         setIsLoggedIn(true);
-        window.location.href = "/dashboard"; // Redirect on success
+        setUser(data.user);
+        window.location.href = "/dashboard";
       } else {
         alert(data.message || "Login failed");
       }
@@ -48,11 +64,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await fetch("/api/logout", {
         method: "GET",
-        credentials: "include", // Include cookie
+        credentials: "include",
       });
 
       localStorage.removeItem("isLoggedIn");
+      localStorage.removeItem("user");
       setIsLoggedIn(false);
+      setUser(null);
       window.location.href = "/";
     } catch (err) {
       console.error("Logout error:", err);
@@ -61,7 +79,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

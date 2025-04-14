@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import useSWR from 'swr';
+import useSWR,{mutate} from 'swr';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import AddEditModal from '@/components/AddEditModal';
 import Navbar from '@/components/Navbar';
@@ -78,14 +78,34 @@ export default function HomePage() {
     setSelectedLoan(null);
   };
 
+  const deleteLoan = async (loan: any) => {
+    try {
+      const res = await fetch(`/api/loans/${loan._id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+  
+      const result = await res.json();
+  
+      if (result.success) {
+        console.log("Loan deleted successfully");
+        mutate('/api/loans'); // ✅ revalidate SWR cache
+      } else {
+        console.error("Delete failed:", result.message);
+      }
+    } catch (error) {
+      console.error("Error deleting loan:", error);
+    }
+  };
+  
   return (
     <Navbar>
       <main className="p-6 max-w-full mx-auto">
         <h1 className="text-3xl font-bold mb-6 text-gray-800">📋 Loan List - Arunkumar</h1>
-        <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
 
           {/* File Upload */}
-          <div className="space-y-4 md:space-y-0 md:flex md:items-center md:space-x-4">
+          {/* <div className="space-y-4 md:space-y-0 md:flex md:items-center md:space-x-4">
             <input
               type="file"
               accept=".xlsx, .xls"
@@ -99,7 +119,7 @@ export default function HomePage() {
             >
               {uploading ? 'Uploading...' : 'Upload Excel'}
             </button>
-          </div>
+          </div> */}
 
           {/* Search Bar */}
           <div className="w-full md:w-1/2">
@@ -181,7 +201,7 @@ export default function HomePage() {
                       <button className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700" onClick={(_event: any) => openModal(loan)}>
                         <FaEdit />
                       </button>
-                      <button className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700">
+                      <button className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700" onClick={(_event: any) => deleteLoan(loan)}>
                         <FaTrash />
                       </button>
                     </div>
@@ -191,7 +211,7 @@ export default function HomePage() {
                       <button className="px-3 py-1 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded" onClick={(_event: any) => openModal(loan)}>
                         Edit
                       </button>
-                      <button className="px-3 py-1 text-sm text-white bg-red-600 hover:bg-red-700 rounded">
+                      <button className="px-3 py-1 text-sm text-white bg-red-600 hover:bg-red-700 rounded" onClick={(_event: any) => deleteLoan(loan)}>
                         Delete
                       </button>
                     </div>
@@ -212,6 +232,7 @@ export default function HomePage() {
           <AddEditModal
             initialData={selectedLoan} // Pass loan data to the modal (for editing)
             closeModal={closeModal} // Close the modal
+            refreshData={()=> mutate('/api/loans')}
           />
         )}
       </main>

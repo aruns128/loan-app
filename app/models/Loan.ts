@@ -12,6 +12,7 @@ const LoanSchema = new mongoose.Schema({
   total_year: Number,
   status: String, // Live or returned
   earned_amount: Number,
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 });
 
 export default mongoose.models.Loan || mongoose.model('Loan', LoanSchema);
